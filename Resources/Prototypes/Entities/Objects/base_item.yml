@@ -36,7 +36,7 @@
           bounds: "-0.25,-0.25,0.25,0.25"
         density: 20
         mask:
-        - ItemMask
+        - Impassable
         restitution: 0.3  # fite me
         friction: 0.2
   - type: Sprite
@@ -44,6 +44,7 @@
     noRot: false
   - type: Pullable
   - type: DamageExaminable
+  - type: ZPhysics
 
 - type: entity
   name: "storage item"

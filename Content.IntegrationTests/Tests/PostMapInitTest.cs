@@ -102,6 +102,7 @@ namespace Content.IntegrationTests.Tests
             "dm01-entryway",
             "Exo",
             "Snowball",
+            "ZLevelsTemplate",
         };
 
         private static readonly ProtoId<EntityCategoryPrototype> DoNotMapCategory = "DoNotMap";

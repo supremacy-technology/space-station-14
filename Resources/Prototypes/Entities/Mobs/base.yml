@@ -1,4 +1,4 @@
-# The literal bare minimum needed to be a controllable mob. Cannot move but can interact.
+  # The literal bare minimum needed to be a controllable mob. Cannot move but can interact.
 - type: entity
   abstract: true
   save: false
@@ -54,6 +54,7 @@
   - type: MobMover
   - type: MovementSpeedModifier
   - type: LagCompensation
+  - type: ZPhysics
 
 - type: entity
   save: false

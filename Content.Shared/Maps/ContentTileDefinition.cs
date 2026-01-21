@@ -90,7 +90,7 @@ namespace Content.Shared.Maps
         [DataField("heatCapacity")] public float HeatCapacity = Atmospherics.MinimumHeatCapacity;
 
         [DataField("itemDrop", customTypeSerializer:typeof(PrototypeIdSerializer<EntityPrototype>))]
-        public string ItemDropPrototypeName { get; private set; } = "FloorTileItemSteel";
+        public string? ItemDropPrototypeName { get; private set; }
 
         // TODO rename data-field in yaml
         /// <summary>
@@ -126,5 +126,17 @@ namespace Content.Shared.Maps
         {
             TileId = id;
         }
+
+        /// <summary>
+        /// Vanilla tile filtering
+        /// </summary>
+        //[DataField]
+        //public bool EditorHidden { get; private set; } = true;
+
+        /// <summary>
+        /// Used for lightning calculation through zlevels
+        /// </summary>
+        [DataField]
+        public bool Transparent = false;
     }
 }

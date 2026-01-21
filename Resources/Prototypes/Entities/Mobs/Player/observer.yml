@@ -28,6 +28,10 @@
         layer:
         - GhostImpassable
 
+  - type: ZLevelGhostMover
+  - type: ZPhysics
+    autoStep: false
+
 # shared parent between aghosts, replay spectators and normal observers
 - type: entity
   parent:

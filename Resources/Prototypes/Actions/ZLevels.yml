@@ -1,0 +1,49 @@
+- type: entity
+  id: ActionZLevelUp
+  name: Move up
+  description: Move up one Z-Level
+  components:
+  - type: Action
+    checkCanInteract: false
+    icon:
+      sprite: Interface/Actions/actions_mecha.rsi
+      state: mech_cycle_equip_on
+  - type: InstantAction
+    event: !type:ZLevelActionUp
+
+- type: entity
+  id: ActionZLevelDown
+  name: Move down
+  description: Move down one Z-Level
+  components:
+  - type: Action
+    checkCanInteract: false
+    icon:
+      sprite: Interface/Actions/actions_mecha.rsi
+      state: mech_cycle_equip_on
+  - type: InstantAction
+    event: !type:ZLevelActionDown
+
+- type: entity
+  id: ActionToggleLookUp
+  name: Look up
+  description: You lift your head and look up at the sky.
+  components:
+  - type: Action
+    checkCanInteract: false
+    icon:
+      sprite: Interface/Actions/actions_mecha.rsi
+      state: mech_cycle_equip_on
+  - type: InstantAction
+    event: !type:ToggleZLevelLookUpAction
+
+- type: shader
+  id: ZBlur
+  kind: source
+  path: "/Textures/Shaders/zblur.swsl"
+
+# We just need simple non-saveable prototype for zEye entities
+- type: entity
+  id: ZLevelEye
+  save: false
+  categories: [ HideSpawnMenu ]
