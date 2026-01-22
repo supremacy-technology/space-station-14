@@ -37,6 +37,9 @@ public abstract partial class SharedZLevelsSystem
 
         SubscribeLocalEvent<ZPhysicsComponent, MoveEvent>(OnMoveEvent);
         SubscribeLocalEvent<ZLevelMapComponent, TileChangedEvent>(OnTileChanged);
+
+        SubscribeLocalEvent<DamageableComponent, ZLevelHitEvent>(OnFallDamage);
+        SubscribeLocalEvent<PhysicsComponent, ZLevelHitEvent>(OnFallAreaImpact);
     }
 
     private void OnActiveInit(Entity<ActiveZPhysicsComponent> ent, ref ComponentInit args)
@@ -96,6 +99,39 @@ public abstract partial class SharedZLevelsSystem
         args.VelocityDelta -= ZGravityForce * ent.Comp.GravityMultiplier;
     }
 
+    private void OnFallDamage(Entity<DamageableComponent> ent, ref ZLevelHitEvent args) //TODO unhardcode
+    {
+        var knockdownTime = MathF.Min(args.ImpactPower * 0.25f, 5f);
+        _stun.TryKnockdown(ent.Owner, TimeSpan.FromSeconds(knockdownTime));
+
+        var damageType = _proto.Index<DamageTypePrototype>("Blunt");
+        var damageAmount = args.ImpactPower * 6f;
+
+        _damage.TryChangeDamage(ent.Owner, new DamageSpecifier(damageType, damageAmount));
+    }
+
+    /// <summary>
+    /// Cause AoE damage in impact point
+    /// </summary>
+    private void OnFallAreaImpact(Entity<PhysicsComponent> ent, ref ZLevelHitEvent args)
+    {
+        var entitiesAround = _lookup.GetEntitiesInRange(ent, 0.25f, LookupFlags.Uncontained);
+
+        foreach (var victim in entitiesAround)
+        {
+            if (victim == ent.Owner)
+                continue;
+
+            var knockdownTime = MathF.Min(args.ImpactPower * ent.Comp.Mass * 0.1f, 10f);
+            _stun.TryKnockdown(victim, TimeSpan.FromSeconds(knockdownTime));
+
+            var damageType = _proto.Index<DamageTypePrototype>("Blunt");
+            var damageAmount = args.ImpactPower * ent.Comp.Mass * 0.15f;
+
+            _damage.TryChangeDamage(victim, new DamageSpecifier(damageType, damageAmount));
+        }
+    }
+
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
@@ -148,9 +184,19 @@ public abstract partial class SharedZLevelsSystem
 
             if (zPhys.LocalPosition < 0) //Need teleport to ZLevel down
             {
-                if (TryMoveDownOrChasm(uid))
+                var nearestFloor = GetNearestFloorBelow(uid, xform.MapUid, 3);
+                if (nearestFloor == null)
                 {
-                    zPhys.LocalPosition += 1;
+                    zPhys.LocalPosition = 0;
+                    zPhys.Velocity = 0;
+                    DirtyField(uid, zPhys, nameof(ZPhysicsComponent.Velocity));
+                    DirtyField(uid, zPhys, nameof(ZPhysicsComponent.LocalPosition));
+                    continue;
+                }
+
+                if (TryMoveDownOrChasm(uid, nearestFloor.Value))
+                {
+                    zPhys.LocalPosition += Math.Abs(nearestFloor.Value);
 
                     if (!zPhys.CurrentStickyGround)
                     {
@@ -325,6 +371,48 @@ public abstract partial class SharedZLevelsSystem
     }
 
     /// <summary>
+    /// Checks whether there is a floor below the specified entity within maxDistance levels.
+    /// Returns the offset to the nearest floor (e.g., -1 for immediate level below, -2 for two levels below).
+    /// If no floor found within maxDistance, returns null.
+    /// </summary>
+    [PublicAPI]
+    public int? GetNearestFloorBelow(EntityUid ent, Entity<ZLevelMapComponent?>? currentMapUid = null, int maxDistance = 3)
+    {
+        currentMapUid ??= Transform(ent).MapUid;
+
+        if (currentMapUid is null)
+            return null;
+
+        var worldPos = _transform.GetWorldPosition(ent);
+
+        for (int offset = 1; offset <= maxDistance; offset++)
+        {
+            if (!TryMapOffset(currentMapUid.Value, -offset, out var mapBelowUid))
+                break;
+
+            if (!_gridQuery.TryComp(mapBelowUid.Value, out var mapBelowGrid))
+                continue;
+
+            if (_map.TryGetTileRef(mapBelowUid.Value, mapBelowGrid, worldPos, out var tileRef) &&
+                !tileRef.Tile.IsEmpty)
+            {
+                return -offset;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Checks whether there is a tile (floor) exactly one level below the entity.
+    /// </summary>
+    [PublicAPI]
+    public bool HasTileBelow(EntityUid ent, Entity<ZLevelMapComponent?>? currentMapUid = null)
+    {
+        return GetNearestFloorBelow(ent, currentMapUid, 1) == -1;
+    }
+
+    /// <summary>
     /// Checks whether there is a ceiling above the specified entity (tiles on the layer above).
     /// If there are no Z-levels above, false will be returned.
     /// </summary>
@@ -428,32 +516,26 @@ public abstract partial class SharedZLevelsSystem
     }
 
     [PublicAPI]
-    public bool TryMoveUp(EntityUid ent)
+    public bool TryMoveUp(EntityUid ent, int offset = 1)
     {
-        return TryMove(ent, 1);
+        return TryMove(ent, offset);
     }
 
     [PublicAPI]
-    public bool TryMoveDown(EntityUid ent)
+    public bool TryMoveDown(EntityUid ent, int offset = -1)
     {
-        return TryMove(ent, -1);
+        return TryMove(ent, offset);
     }
 
     [PublicAPI]
-    public bool TryMoveDownOrChasm(EntityUid ent)
+    public bool TryMoveDownOrChasm(EntityUid ent, int offset = -1)
     {
-        if (TryMoveDown(ent))
+        if (TryMoveDown(ent, offset))
             return true;
 
         //welp, that default Chasm behavior. Not really good, but ok for now.
         if (HasComp<ChasmFallingComponent>(ent))
             return false; //Already falling
-
-        var audio = new SoundPathSpecifier("/Audio/Effects/falling.ogg");
-        _audio.PlayPredicted(audio, Transform(ent).Coordinates, ent);
-        var falling = AddComp<ChasmFallingComponent>(ent);
-        falling.NextDeletionTime = _timing.CurTime + falling.DeletionTime;
-        _blocker.UpdateCanMove(ent);
 
         return false;
     }
