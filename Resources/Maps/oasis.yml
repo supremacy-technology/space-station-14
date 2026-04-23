@@ -202080,36 +202080,6 @@ entities:
       rot: -1.5707963267948966 rad
       pos: 34.5,-17.5
       parent: 2
-- proto: WallSolidDiagonal
-  entities:
-  - uid: 4442
-    components:
-    - type: Transform
-      pos: 46.5,-17.5
-      parent: 2
-  - uid: 14307
-    components:
-    - type: Transform
-      pos: 41.5,-14.5
-      parent: 2
-  - uid: 14551
-    components:
-    - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: -37.5,-57.5
-      parent: 2
-  - uid: 29030
-    components:
-    - type: Transform
-      rot: 3.141592653589793 rad
-      pos: 41.5,-45.5
-      parent: 2
-  - uid: 29491
-    components:
-    - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: -60.5,-10.5
-      parent: 2
 - proto: WallSolidRust
   entities:
   - uid: 24642

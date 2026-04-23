@@ -6,15 +6,6 @@
     actions:
     - !type:DestroyEntity {}
     edges:
-    - to: wall
-      completed:
-      - !type:SnapToGrid
-        southRotation: true
-      steps:
-      - material: WebSilk
-        amount: 4
-        doAfter: 3
-
     - to: table
       completed:
       - !type:SnapToGrid
@@ -62,17 +53,6 @@
 
 
   # Deconstruction is down here
-  - node: wall
-    entity: WallWeb
-    edges:
-    - to: start
-      completed:
-      - !type:SpawnPrototype
-        prototype: MaterialWebSilk1
-        amount: 4
-      steps:
-      - tool: Cutting
-        doAfter: 2
 
   - node: table
     entity: TableWeb
