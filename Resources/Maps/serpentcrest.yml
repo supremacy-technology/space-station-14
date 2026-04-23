@@ -123871,52 +123871,6 @@ entities:
     - type: Transform
       pos: 36.5,-56.5
       parent: 2
-- proto: GrilleDiagonal
-  entities:
-  - uid: 1041
-    components:
-    - type: Transform
-      pos: -21.5,49.5
-      parent: 2
-  - uid: 1052
-    components:
-    - type: Transform
-      pos: -23.5,47.5
-      parent: 2
-  - uid: 3476
-    components:
-    - type: Transform
-      pos: -22.5,48.5
-      parent: 2
-  - uid: 3478
-    components:
-    - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: -23.5,41.5
-      parent: 2
-  - uid: 3480
-    components:
-    - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: -21.5,39.5
-      parent: 2
-  - uid: 11069
-    components:
-    - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: -19.5,37.5
-      parent: 2
-  - uid: 11070
-    components:
-    - type: Transform
-      pos: -19.5,51.5
-      parent: 2
-  - uid: 18539
-    components:
-    - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: -22.5,40.5
-      parent: 2
 - proto: GrilleSpawner
   entities:
   - uid: 10346
@@ -134095,7 +134049,7 @@ entities:
       parent: 2
     - type: Paper
       content: >-
-        Captain, this is yet another reminder to keep your men in line, let me remind you that our contract can be revoked at any time, and you are allowed both on this station and in this sector at our behest. 
+        Captain, this is yet another reminder to keep your men in line, let me remind you that our contract can be revoked at any time, and you are allowed both on this station and in this sector at our behest.
 
 
         also, have your ship ready to deploy at any time, we expect the enemy will arrive any day now.
