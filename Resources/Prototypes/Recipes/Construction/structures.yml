@@ -208,6 +208,19 @@
   - !type:TileNotBlocked
 
 - type: construction
+  id: Cardwall
+  graph: Cardwall
+  startNode: start
+  targetNode: cardwall
+  category: construction-category-structures
+  conditions:
+  - !type:TileNotBlocked
+    failIfSpace: false
+  objectType: Structure
+  placementMode: SnapgridCenter
+  canRotate: false
+
+- type: construction
   id: Grille
   graph: Grille
   startNode: start
@@ -232,30 +245,6 @@
   objectType: Structure
   placementMode: SnapgridCenter
   canRotate: false
-
-- type: construction
-  id: GrilleDiagonal
-  graph: GrilleDiagonal
-  startNode: start
-  targetNode: grilleDiagonal
-  category: construction-category-structures
-  conditions:
-    - !type:TileNotBlocked
-      failIfSpace: false
-  objectType: Structure
-  placementMode: SnapgridCenter
-
-- type: construction
-  id: ClockworkGrilleDiagonal
-  graph: GrilleDiagonal
-  startNode: start
-  targetNode: clockworkGrilleDiagonal
-  category: construction-category-structures
-  conditions:
-    - !type:TileNotBlocked
-      failIfSpace: false
-  objectType: Structure
-  placementMode: SnapgridCenter
 
 - type: construction
   id: Window
@@ -1193,6 +1182,16 @@
   canBuildInImpassable: false
 
 - type: construction
+  id: CardDoor
+  graph: DoorGraph
+  startNode: start
+  targetNode: cardDoor
+  category: construction-category-structures
+  objectType: Structure
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+
+- type: construction
   id: PlasticFlapsClear
   name: construction-recipe-plastic-flaps-clear
   graph: PlasticFlapsGraph
@@ -1292,3 +1291,42 @@
   canBuildInImpassable: false
   conditions:
     - !type:TileNotBlocked
+
+- type: construction
+  id: StationAiCore
+  graph: StationAiCore
+  startNode: start
+  targetNode: stationAiCore
+  category: construction-category-structures
+  objectType: Structure
+  placementMode: SnapgridCenter
+  canRotate: false
+  canBuildInImpassable: false
+  conditions:
+    - !type:TileNotBlocked
+
+- type: construction
+  id: Bonfire
+  graph: Bonfire
+  startNode: start
+  targetNode: bonfire
+  category: construction-category-structures
+  objectType: Structure
+  placementMode: SnapgridCenter
+  canRotate: false
+  canBuildInImpassable: false
+  conditions:
+  - !type:TileNotBlocked
+
+- type: construction
+  id: BonfireStake
+  graph: Bonfire
+  startNode: start
+  targetNode: bonfireStake
+  category: construction-category-structures
+  objectType: Structure
+  placementMode: SnapgridCenter
+  canRotate: false
+  canBuildInImpassable: false
+  conditions:
+  - !type:TileNotBlocked

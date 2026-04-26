@@ -3006,30 +3006,6 @@ entities:
       rot: -1.5707963267948966 rad
       pos: 8.5,1.5
       parent: 1
-- proto: GrilleDiagonal
-  entities:
-  - uid: 456
-    components:
-    - type: Transform
-      pos: -5.5,13.5
-      parent: 1
-  - uid: 457
-    components:
-    - type: Transform
-      rot: -1.5707963267948966 rad
-      pos: 0.5,13.5
-      parent: 1
-  - uid: 458
-    components:
-    - type: Transform
-      pos: -3.5,14.5
-      parent: 1
-  - uid: 459
-    components:
-    - type: Transform
-      rot: -1.5707963267948966 rad
-      pos: -1.5,14.5
-      parent: 1
 - proto: Gyroscope
   entities:
   - uid: 460
