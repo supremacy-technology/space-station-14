@@ -5,7 +5,7 @@ using Robust.Server.GameObjects;
 using Robust.Shared.Console;
 using Robust.Shared.Map;
 
-namespace Content.Server.ZLevels.Mapping;
+namespace Content.Server.ZLevels.Mapping.Commands;
 
 [AdminCommand(AdminFlags.Server | AdminFlags.Mapping)]
 public sealed class CombineZNetworkCommand : LocalizedEntityCommands

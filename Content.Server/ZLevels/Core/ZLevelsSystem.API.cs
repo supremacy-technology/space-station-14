@@ -1,21 +1,61 @@
-﻿using Content.Server.ZLevels.PVS;
+﻿/*
+ * This file is sublicensed under MIT License
+ * https://github.com/space-wizards/space-station-14/blob/master/LICENSE.TXT
+ */
+
+using Content.Server.ZLevels.PVS;
 using Content.Shared.ZLevels.Core.Components;
 using JetBrains.Annotations;
+using Robust.Shared.Map.Components;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server.ZLevels.Core;
 
 public sealed partial class ZLevelsSystem
 {
     /// <summary>
+    /// Initializes all uninitialized maps in the z-network.
+    /// </summary>
+    [PublicAPI]
+    public void InitializeZNetwork(Entity<ZLevelsNetworkComponent> network)
+    {
+        foreach (var (_, mapUid) in network.Comp.ZLevels)
+        {
+            if (!TryComp<MapComponent>(mapUid, out var mapComp))
+            {
+                Log.Error($"Map entity {mapUid} does not have MapComponent.");
+                continue;
+            }
+
+            if (!_map.MapExists(mapComp.MapId))
+            {
+                Log.Error($"Map with ID {mapComp.MapId} does not exist.");
+                continue;
+            }
+
+            if (_map.IsInitialized(mapComp.MapId))
+            {
+                Log.Debug($"Map with ID {mapComp.MapId} is already initialized.");
+                continue;
+            }
+
+            _map.InitializeMap(mapComp.MapId);
+            Log.Info($"Map with ID {mapComp.MapId} initialized.");
+        }
+    }
+
+    /// <summary>
     /// Creates a new entity zLevelNetwork
     /// </summary>
     [PublicAPI]
-    public Entity<ZLevelsNetworkComponent> CreateZNetwork()
+    public Entity<ZLevelsNetworkComponent> CreateZNetwork(ComponentRegistry? components = null)
     {
         var ent = Spawn();
 
         var zLevel = EnsureComp<ZLevelsNetworkComponent>(ent);
         EnsureComp<ZLevelsPVSOverrideComponent>(ent);
+
+        zLevel.Components = components ?? new ComponentRegistry();
 
         return (ent, zLevel);
     }
@@ -44,7 +84,12 @@ public sealed partial class ZLevelsSystem
         }
 
         network.Comp.ZLevels.Add(depth, mapUid);
-        EnsureComp<ZLevelMapComponent>(mapUid).Depth = depth;
+        var zlevel = EnsureComp<ZLevelMapComponent>(mapUid);
+        zlevel.Depth = depth;
+        Dirty(network);
+        Dirty(mapUid, zlevel);
+
+        RaiseLocalEvent(mapUid, new MapAddedIntoZNetworkEvent(network, depth));
 
         return true;
     }
@@ -62,9 +107,56 @@ public sealed partial class ZLevelsSystem
 
         return success;
     }
+
+    /// <summary>
+    /// Renames the z-network entity and every map inside it in one go, matching the
+    /// convention used by station / mapping z-networks
+    /// (network = <paramref name="networkName"/>, each map = <c>"{mapNameBase} [{depth}]"</c>).
+    /// </summary>
+    [PublicAPI]
+    public void SetZNetworkName(Entity<ZLevelsNetworkComponent> network, string networkName, string mapNameBase)
+    {
+        _meta.SetEntityName(network, networkName);
+
+        foreach (var (depth, mapUid) in network.Comp.ZLevels)
+        {
+            if (mapUid is { } mu)
+                _meta.SetEntityName(mu, $"{mapNameBase} [{depth}]");
+        }
+    }
+
+    /// <summary>
+    /// Deletes a z-network: queues deletion of all maps in the network, then the network entity itself.
+    /// </summary>
+    [PublicAPI]
+    public void DeleteZNetwork(EntityUid networkUid)
+    {
+        if (!TryComp<ZLevelsNetworkComponent>(networkUid, out var zNet))
+        {
+            Log.Error($"ZLevelsSystem: entity {networkUid} does not have ZLevelsNetworkComponent.");
+            return;
+        }
+
+        foreach (var (_, mapUid) in zNet.ZLevels)
+        {
+            if (mapUid != null)
+                QueueDel(mapUid.Value);
+        }
+
+        QueueDel(networkUid);
+    }
 }
 
 /// <summary>
 /// Called on ZLevel Network Entity, when maps added or removed from network
 /// </summary>
 public sealed class ZLevelNetworkUpdatedEvent : EntityEventArgs;
+
+/// <summary>
+/// Called on map, when it added to ZNetwork
+/// </summary>
+public sealed class MapAddedIntoZNetworkEvent(Entity<ZLevelsNetworkComponent> network, int depth) : EntityEventArgs
+{
+    public Entity<ZLevelsNetworkComponent> Network = network;
+    public int Depth = depth;
+}

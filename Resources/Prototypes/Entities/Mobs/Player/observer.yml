@@ -27,7 +27,6 @@
         density: 15
         layer:
         - GhostImpassable
-
   - type: ZLevelGhostMover
   - type: ZPhysics
     autoStep: false

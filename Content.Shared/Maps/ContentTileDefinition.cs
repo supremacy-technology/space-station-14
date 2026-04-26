@@ -97,7 +97,7 @@ namespace Content.Shared.Maps
         [DataField("heatCapacity")] public float HeatCapacity = Atmospherics.MinimumHeatCapacity;
 
         [DataField("itemDrop", customTypeSerializer:typeof(PrototypeIdSerializer<EntityPrototype>))]
-        public string? ItemDropPrototypeName { get; private set; }
+        public string ItemDropPrototypeName { get; private set; } = "FloorTileItemSteel";
 
         // TODO rename data-field in yaml
         /// <summary>
@@ -106,13 +106,13 @@ namespace Content.Shared.Maps
         [DataField("isSpace")] public bool MapAtmosphere { get; private set; }
 
         /// <summary>
-        ///     Friction override for mob mover in <see cref="SharedMoverController"/>
+        /// Friction override for mob mover in <see cref="SharedMoverController"/>
         /// </summary>
         [DataField("mobFriction")]
         public float? MobFriction { get; private set; }
 
         /// <summary>
-        ///     Accel override for mob mover in <see cref="SharedMoverController"/>
+        /// Accel override for mob mover in <see cref="SharedMoverController"/>
         /// </summary>
         [DataField("mobAcceleration")]
         public float? MobAcceleration { get; private set; }
@@ -130,9 +130,9 @@ namespace Content.Shared.Maps
         [DataField("indestructible")] public bool Indestructible = false;
 
         /// <summary>
-        ///     Hide this tile in the tile placement editor.
+        /// Hide this tile in the tile placement editor.
         /// </summary>
-        [DataField] public bool EditorHidden { get; private set; } = false;
+        [DataField] public bool EditorHidden { get; private set; } = true;
 
         public void AssignTileId(ushort id)
         {
@@ -140,15 +140,16 @@ namespace Content.Shared.Maps
         }
 
         /// <summary>
-        /// Vanilla tile filtering
-        /// </summary>
-        //[DataField]
-        //public bool EditorHidden { get; private set; } = true;
-
-        /// <summary>
         /// Used for lightning calculation through zlevels
         /// </summary>
         [DataField]
         public bool Transparent = false;
+
+        /// <summary>
+        /// CrystallEdge: RSI path for icon-smooth border sprites.
+        /// Contains states tile_0..tile_6 and full.
+        /// </summary>
+        [DataField]
+        public ResPath? IconSmoothSprite { get; private set; }
     }
 }

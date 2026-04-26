@@ -5,6 +5,7 @@ using Content.Shared.Actions;
 using Content.Shared.Audio;
 using Content.Shared.Damage.Systems;
 using Content.Shared.DoAfter;
+using Content.Shared.Gravity;
 using Content.Shared.Mobs;
 using Content.Shared.Stunnable;
 using JetBrains.Annotations;
@@ -19,6 +20,7 @@ public abstract partial class SharedZFlightSystem : EntitySystem
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly SharedActionsSystem _actions = default!;
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
+    [Dependency] private readonly SharedGravitySystem _gravity = default!;
 
     protected EntityQuery<ZPhysicsComponent> ZPhyzQuery;
 
@@ -33,11 +35,21 @@ public abstract partial class SharedZFlightSystem : EntitySystem
         SubscribeLocalEvent<ZPhysicsComponent, FlightStoppedEvent>(OnStopFlight);
         SubscribeLocalEvent<ZFlyerComponent, GetZVelocityEvent>(OnGetZVelocity);
         SubscribeLocalEvent<ZFlyerComponent, CheckGravityEvent>(OnGetGravity);
+        SubscribeLocalEvent<ZFlyerComponent, IsWeightlessEvent>(CheckWeightless);
 
         SubscribeLocalEvent<ZFlyerComponent, StunnedEvent>(OnStunned);
         SubscribeLocalEvent<ZFlyerComponent, KnockedDownEvent>(OnKnockDowned);
         SubscribeLocalEvent<ZFlyerComponent, MobStateChangedEvent>(OnMobStateChanged);
         SubscribeLocalEvent<ZFlyerComponent, DamageChangedEvent>(OnDamageChanged);
+    }
+
+    private void CheckWeightless(Entity<ZFlyerComponent> ent, ref IsWeightlessEvent args)
+    {
+        if (!ent.Comp.Active || args.Handled)
+            return;
+
+        args.IsWeightless = true;
+        args.Handled = true;
     }
 
     private void OnDamageChanged(Entity<ZFlyerComponent> ent, ref DamageChangedEvent args)
@@ -84,7 +96,7 @@ public abstract partial class SharedZFlightSystem : EntitySystem
 
         var zPhys = args.Target.Comp;
         var currentPos = zPhys.CurrentZLevel + zPhys.LocalPosition;
-        var targetPos = ent.Comp.TargetMapHeight + 0.5f;
+        var targetPos = ent.Comp.TargetMapHeight + 0.2f;
         var currentVelocity = zPhys.Velocity;
 
         var distanceToTarget = targetPos - currentPos;
@@ -140,6 +152,7 @@ public abstract partial class SharedZFlightSystem : EntitySystem
         DirtyField(ent, ent.Comp, nameof(ZFlyerComponent.Active));
 
         _zLevel.UpdateGravityState((ent, zPhys));
+        _gravity.RefreshWeightless(ent.Owner);
 
         RaiseLocalEvent(ent, new FlightStartedEvent());
         return true;
@@ -161,6 +174,7 @@ public abstract partial class SharedZFlightSystem : EntitySystem
         DirtyField(ent, ent.Comp, nameof(ZFlyerComponent.Active));
 
         _zLevel.UpdateGravityState((ent, zPhys));
+        _gravity.RefreshWeightless(ent.Owner);
 
         RaiseLocalEvent(ent, new FlightStoppedEvent());
     }

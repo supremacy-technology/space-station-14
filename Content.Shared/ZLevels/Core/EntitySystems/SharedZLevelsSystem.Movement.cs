@@ -1,9 +1,7 @@
 ﻿using System.Numerics;
 using Content.Shared.ZLevels.Core.Components;
 using Content.Shared.Chasm;
-using Content.Shared.Damage;
-using Content.Shared.Damage.Components;
-using Content.Shared.Damage.Prototypes;
+using Content.Shared.Inventory;
 using Content.Shared.Throwing;
 using JetBrains.Annotations;
 using Robust.Shared.Audio;
@@ -15,8 +13,6 @@ namespace Content.Shared.ZLevels.Core.EntitySystems;
 
 public abstract partial class SharedZLevelsSystem
 {
-    public const int MaxZLevelsBelowRendering = 3;
-
     private const float ZGravityForce = 9.8f;
     private const float ZVelocityLimit = 20.0f;
 
@@ -37,9 +33,6 @@ public abstract partial class SharedZLevelsSystem
 
         SubscribeLocalEvent<ZPhysicsComponent, MoveEvent>(OnMoveEvent);
         SubscribeLocalEvent<ZLevelMapComponent, TileChangedEvent>(OnTileChanged);
-
-        SubscribeLocalEvent<DamageableComponent, ZLevelHitEvent>(OnFallDamage);
-        SubscribeLocalEvent<PhysicsComponent, ZLevelHitEvent>(OnFallAreaImpact);
     }
 
     private void OnActiveInit(Entity<ActiveZPhysicsComponent> ent, ref ComponentInit args)
@@ -99,44 +92,15 @@ public abstract partial class SharedZLevelsSystem
         args.VelocityDelta -= ZGravityForce * ent.Comp.GravityMultiplier;
     }
 
-    private void OnFallDamage(Entity<DamageableComponent> ent, ref ZLevelHitEvent args) //TODO unhardcode
-    {
-        var knockdownTime = MathF.Min(args.ImpactPower * 0.25f, 5f);
-        _stun.TryKnockdown(ent.Owner, TimeSpan.FromSeconds(knockdownTime));
+    //Currently we have no need for active z-physics, so we can skip this costly loop.
+    //We will return to it when we ready.
 
-        var damageType = _proto.Index<DamageTypePrototype>("Blunt");
-        var damageAmount = args.ImpactPower * 6f;
-
-        _damage.TryChangeDamage(ent.Owner, new DamageSpecifier(damageType, damageAmount));
-    }
-
-    /// <summary>
-    /// Cause AoE damage in impact point
-    /// </summary>
-    private void OnFallAreaImpact(Entity<PhysicsComponent> ent, ref ZLevelHitEvent args)
-    {
-        var entitiesAround = _lookup.GetEntitiesInRange(ent, 0.25f, LookupFlags.Uncontained);
-
-        foreach (var victim in entitiesAround)
-        {
-            if (victim == ent.Owner)
-                continue;
-
-            var knockdownTime = MathF.Min(args.ImpactPower * ent.Comp.Mass * 0.1f, 10f);
-            _stun.TryKnockdown(victim, TimeSpan.FromSeconds(knockdownTime));
-
-            var damageType = _proto.Index<DamageTypePrototype>("Blunt");
-            var damageAmount = args.ImpactPower * ent.Comp.Mass * 0.15f;
-
-            _damage.TryChangeDamage(victim, new DamageSpecifier(damageType, damageAmount));
-        }
-    }
-
+    /*
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
 
-        var query = EntityQueryEnumerator<ZPhysicsComponent, ActiveZPhysicsComponent, TransformComponent, PhysicsComponent>();
+        var query = EntityQueryEnumerator<CEZPhysicsComponent, CEActiveZPhysicsComponent, TransformComponent, PhysicsComponent>();
         while (query.MoveNext(out var uid, out var zPhys, out _, out var xform, out var physics))
         {
             if (!_zMapQuery.HasComp(xform.MapUid))
@@ -148,7 +112,7 @@ public abstract partial class SharedZLevelsSystem
             if (physics.BodyStatus == BodyStatus.OnGround)
             {
                 //Velocity application
-                var velocityEv = new GetZVelocityEvent((uid, zPhys));
+                var velocityEv = new CEGetZVelocityEvent((uid, zPhys));
                 RaiseLocalEvent(uid, velocityEv);
 
                 zPhys.Velocity += velocityEv.VelocityDelta * frameTime;
@@ -173,7 +137,8 @@ public abstract partial class SharedZLevelsSystem
                 {
                     if (MathF.Abs(zPhys.Velocity) >= ImpactVelocityLimit)
                     {
-                        RaiseLocalEvent(uid, new ZLevelHitEvent(-zPhys.Velocity));
+                        var ev = new ZLevelHitEvent(-zPhys.Velocity);
+                        RaiseLocalEvent(uid, ref ev);
                         var land = new LandEvent(null, true);
                         RaiseLocalEvent(uid, ref land);
                     }
@@ -184,24 +149,14 @@ public abstract partial class SharedZLevelsSystem
 
             if (zPhys.LocalPosition < 0) //Need teleport to ZLevel down
             {
-                var nearestFloor = GetNearestFloorBelow(uid, xform.MapUid, 3);
-                if (nearestFloor == null)
+                if (TryMoveDownOrChasm(uid))
                 {
-                    zPhys.LocalPosition = 0;
-                    zPhys.Velocity = 0;
-                    DirtyField(uid, zPhys, nameof(ZPhysicsComponent.Velocity));
-                    DirtyField(uid, zPhys, nameof(ZPhysicsComponent.LocalPosition));
-                    continue;
-                }
-
-                if (TryMoveDownOrChasm(uid, nearestFloor.Value))
-                {
-                    zPhys.LocalPosition += Math.Abs(nearestFloor.Value);
+                    zPhys.LocalPosition += 1;
 
                     if (!zPhys.CurrentStickyGround)
                     {
                         var fallEv = new ZLevelFallMapEvent();
-                        RaiseLocalEvent(uid, fallEv);
+                        RaiseLocalEvent(uid, ref fallEv);
                     }
                 }
             }
@@ -212,7 +167,8 @@ public abstract partial class SharedZLevelsSystem
                 {
                     if (MathF.Abs(zPhys.Velocity) >= ImpactVelocityLimit)
                     {
-                        RaiseLocalEvent(uid, new ZLevelHitEvent(zPhys.Velocity));
+                        var ev = new ZLevelHitEvent(zPhys.Velocity);
+                        RaiseLocalEvent(uid, ref ev);
                         var land = new LandEvent(null, true);
                         RaiseLocalEvent(uid, ref land);
                     }
@@ -231,12 +187,13 @@ public abstract partial class SharedZLevelsSystem
                 zPhys.Velocity = MathF.Sign(zPhys.Velocity) * ZVelocityLimit;
 
             if (Math.Abs(oldVelocity - zPhys.Velocity) > 0.01f)
-                DirtyField(uid, zPhys, nameof(ZPhysicsComponent.Velocity));
+                DirtyField(uid, zPhys, nameof(CEZPhysicsComponent.Velocity));
 
             if (Math.Abs(oldHeight - zPhys.LocalPosition) > 0.01f)
-                DirtyField(uid, zPhys, nameof(ZPhysicsComponent.LocalPosition));
+                DirtyField(uid, zPhys, nameof(CEZPhysicsComponent.LocalPosition));
         }
     }
+    */
 
     /// <summary>
     /// Returns the last cached distance to the floor.
@@ -371,48 +328,6 @@ public abstract partial class SharedZLevelsSystem
     }
 
     /// <summary>
-    /// Checks whether there is a floor below the specified entity within maxDistance levels.
-    /// Returns the offset to the nearest floor (e.g., -1 for immediate level below, -2 for two levels below).
-    /// If no floor found within maxDistance, returns null.
-    /// </summary>
-    [PublicAPI]
-    public int? GetNearestFloorBelow(EntityUid ent, Entity<ZLevelMapComponent?>? currentMapUid = null, int maxDistance = 3)
-    {
-        currentMapUid ??= Transform(ent).MapUid;
-
-        if (currentMapUid is null)
-            return null;
-
-        var worldPos = _transform.GetWorldPosition(ent);
-
-        for (int offset = 1; offset <= maxDistance; offset++)
-        {
-            if (!TryMapOffset(currentMapUid.Value, -offset, out var mapBelowUid))
-                break;
-
-            if (!_gridQuery.TryComp(mapBelowUid.Value, out var mapBelowGrid))
-                continue;
-
-            if (_map.TryGetTileRef(mapBelowUid.Value, mapBelowGrid, worldPos, out var tileRef) &&
-                !tileRef.Tile.IsEmpty)
-            {
-                return -offset;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Checks whether there is a tile (floor) exactly one level below the entity.
-    /// </summary>
-    [PublicAPI]
-    public bool HasTileBelow(EntityUid ent, Entity<ZLevelMapComponent?>? currentMapUid = null)
-    {
-        return GetNearestFloorBelow(ent, currentMapUid, 1) == -1;
-    }
-
-    /// <summary>
     /// Checks whether there is a ceiling above the specified entity (tiles on the layer above).
     /// If there are no Z-levels above, false will be returned.
     /// </summary>
@@ -506,46 +421,61 @@ public abstract partial class SharedZLevelsSystem
         if (!_mapQuery.TryComp(targetMap, out var targetMapComp))
             return false;
 
+        var beforeEv = new ZLevelBeforeMapMoveEvent(offset, targetMap.Value.Comp.Depth);
+        RaiseLocalEvent(ent, ref beforeEv);
 
         _transform.SetMapCoordinates(ent, new MapCoordinates(_transform.GetWorldPosition(ent), targetMapComp.MapId));
 
         var ev = new ZLevelMapMoveEvent(offset, targetMap.Value.Comp.Depth);
-        RaiseLocalEvent(ent, ev);
+        RaiseLocalEvent(ent, ref ev);
 
         return true;
     }
 
     [PublicAPI]
-    public bool TryMoveUp(EntityUid ent, int offset = 1)
+    public bool TryMoveUp(EntityUid ent)
     {
-        return TryMove(ent, offset);
+        return TryMove(ent, 1);
     }
 
     [PublicAPI]
-    public bool TryMoveDown(EntityUid ent, int offset = -1)
+    public bool TryMoveDown(EntityUid ent)
     {
-        return TryMove(ent, offset);
+        return TryMove(ent, -1);
     }
 
     [PublicAPI]
-    public bool TryMoveDownOrChasm(EntityUid ent, int offset = -1)
+    public bool TryMoveDownOrChasm(EntityUid ent)
     {
-        if (TryMoveDown(ent, offset))
+        if (TryMoveDown(ent))
             return true;
 
         //welp, that default Chasm behavior. Not really good, but ok for now.
         if (HasComp<ChasmFallingComponent>(ent))
             return false; //Already falling
 
+        var attempt = new ZLevelChasmAttempt(ent);
+        RaiseLocalEvent(ent, attempt);
+
+        if (attempt.Cancelled)
+            return false;
+
+        var audio = new SoundPathSpecifier("/Audio/Effects/falling.ogg");
+        _audio.PlayPredicted(audio, Transform(ent).Coordinates, ent);
+        var falling = AddComp<ChasmFallingComponent>(ent);
+        falling.NextDeletionTime = _timing.CurTime + falling.DeletionTime;
+        _blocker.UpdateCanMove(ent);
+
         return false;
     }
 }
 
 /// <summary>
-/// Is called on an entity when it moves between z-levels.
+/// Is called on an entity right before it moves between z-levels.
 /// </summary>
 /// <param name="offset">How many levels were crossed. If negative, it means there was a downward movement. If positive, it means an upward movement.</param>
-public sealed class ZLevelMapMoveEvent(int offset, int level) : EntityEventArgs
+[ByRefEvent]
+public struct ZLevelBeforeMapMoveEvent(int offset, int level)
 {
     /// <summary>
     /// How many levels were crossed. If negative, it means there was a downward movement. If positive, it means an upward movement.
@@ -556,15 +486,41 @@ public sealed class ZLevelMapMoveEvent(int offset, int level) : EntityEventArgs
 }
 
 /// <summary>
+/// Is called on an entity when it moves between z-levels.
+/// </summary>
+/// <param name="offset">How many levels were crossed. If negative, it means there was a downward movement. If positive, it means an upward movement.</param>
+[ByRefEvent]
+public struct ZLevelMapMoveEvent(int offset, int level)
+{
+    /// <summary>
+    /// How many levels were crossed. If negative, it means there was a downward movement. If positive, it means an upward movement.
+    /// </summary>
+    public int Offset = offset;
+
+    public int CurrentZLevel = level;
+}
+
+/// <summary>
+///Called upon the essence before attempting to fall into the abyss
+/// </summary>
+public sealed class ZLevelChasmAttempt(EntityUid falled) : CancellableEntityEventArgs, IInventoryRelayEvent
+{
+    public EntityUid Falled = falled;
+    public SlotFlags TargetSlots => SlotFlags.All;
+}
+
+/// <summary>
 /// Is triggered when an entity falls to the lower z-levels under the force of gravity
 /// </summary>
-public sealed class ZLevelFallMapEvent : EntityEventArgs;
+[ByRefEvent]
+public struct ZLevelFallMapEvent;
 
 /// <summary>
 /// It is called on an entity when it hits the floor or ceiling with force.
 /// </summary>
 /// <param name="impactPower">The speed at the moment of impact. Always positive</param>
-public sealed class ZLevelHitEvent(float impactPower) : EntityEventArgs
+[ByRefEvent]
+public struct ZLevelHitEvent(float impactPower)
 {
     /// <summary>
     /// The speed at the moment of impact. Always positive

@@ -2,14 +2,10 @@
 using System.Linq;
 using Content.Shared.ZLevels.Core.Components;
 using Content.Shared.ActionBlocker;
-using Content.Shared.Damage;
-using Content.Shared.Damage.Systems;
 using Content.Shared.Popups;
-using Content.Shared.Stunnable;
 using JetBrains.Annotations;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
 namespace Content.Shared.ZLevels.Core.EntitySystems;
@@ -22,10 +18,7 @@ public abstract partial class SharedZLevelsSystem : EntitySystem
     [Dependency] private readonly ActionBlockerSystem _blocker = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
-    [Dependency] private readonly SharedPopupSystem _popup = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly SharedStunSystem _stun = default!;
-    [Dependency] private readonly DamageableSystem _damage = default!;
+    //[Dependency] private readonly SharedPopupSystem _popup = default!;
 
     private EntityQuery<MapComponent> _mapQuery;
     private EntityQuery<ZLevelMapComponent> _zMapQuery;
@@ -89,6 +82,27 @@ public abstract partial class SharedZLevelsSystem : EntitySystem
                 continue;
 
             outputMapUid = (targetMapUid.Value, targetZLevelComp);
+            return true;
+        }
+
+        return false;
+    }
+
+    [PublicAPI]
+    public bool TryZNetwork(Entity<ZLevelMapComponent?> inputMapUid,
+        [NotNullWhen(true)] out Entity<ZLevelsNetworkComponent>? zNetwork)
+    {
+        zNetwork = null;
+        if (!Resolve(inputMapUid, ref inputMapUid.Comp, false))
+            return false;
+
+        var query = EntityQueryEnumerator<ZLevelsNetworkComponent>();
+        while (query.MoveNext(out var uid, out var network))
+        {
+            if (!network.ZLevels.ContainsValue(inputMapUid))
+                continue;
+
+            zNetwork = (uid, network);
             return true;
         }
 

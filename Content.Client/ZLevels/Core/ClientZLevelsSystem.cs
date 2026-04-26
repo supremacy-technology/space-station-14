@@ -80,7 +80,6 @@ public sealed partial class ClientZLevelsSystem : SharedZLevelsSystem
         }
     }
 
-
     public float GetVisualsLocalPosition(Entity<ZPhysicsComponent?> ent, TransformComponent? xform = null)
     {
         if (!Resolve(ent, ref ent.Comp, false))

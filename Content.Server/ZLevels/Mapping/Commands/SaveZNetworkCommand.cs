@@ -8,7 +8,7 @@ using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Utility;
 
-namespace Content.Server.ZLevels.Mapping;
+namespace Content.Server.ZLevels.Mapping.Commands;
 
 [AdminCommand(AdminFlags.Server | AdminFlags.Mapping)]
 public sealed class SaveZNetworkCommand : LocalizedEntityCommands
@@ -59,7 +59,7 @@ public sealed class SaveZNetworkCommand : LocalizedEntityCommands
 
         if (!_entities.TryGetComponent<ZLevelsNetworkComponent>(target, out var levelComp))
         {
-            shell.WriteError($"Target entity doesnt have CEZLevelsNetworkComponent {args[1]}");
+            shell.WriteError($"Target entity doesnt have ZLevelsNetworkComponent {args[1]}");
             return;
         }
 
