@@ -1,0 +1,39 @@
+- type: constructionGraph
+  id: ZLevelLadderWooden
+  start: start
+  graph:
+  - node: start
+    edges:
+    - to: ZLevelLadderWooden
+      completed:
+      - !type:SnapToGrid
+      steps:
+      - material: CEWood
+        amount: 2
+        doAfter: 2
+
+  - node: ZLevelLadderWooden
+    entity: ZLevelLadderWooden
+    edges:
+    - to: start
+      completed:
+      - !type:SpawnPrototype
+        prototype: CEWoodenPlanks1
+        amount: 2
+      - !type:DeleteEntity {}
+      steps:
+      - tool: Prying
+        doAfter: 2
+    - to: ZLevelLadderWoodenCorner
+      steps:
+      - tool: Prying
+        doAfter: 2
+
+  - node: ZLevelLadderWoodenCorner
+    entity: ZLevelLadderWoodenCorner
+    edges:
+    - to: ZLevelLadderWooden
+      steps:
+      - tool: Prying
+        doAfter: 2
+
