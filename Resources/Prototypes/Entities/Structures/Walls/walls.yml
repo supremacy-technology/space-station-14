@@ -1019,41 +1019,6 @@
     base: solid
 
 - type: entity
-  parent: WallDiagonalBase
-  id: WallSolidDiagonal
-  name: solid wall
-  components:
-  - type: Sprite
-    drawdepth: Walls
-    sprite: Structures/Walls/solid_diagonal.rsi
-    state: state0
-  - type: Icon
-    sprite: Structures/Walls/solid_diagonal.rsi
-    state: state0
-  - type: Destructible
-    thresholds:
-    - trigger:
-        !type:DamageTrigger
-        damage: 400
-      behaviors:
-        - !type:DoActsBehavior
-          acts: [ "Destruction" ]
-        - !type:PlaySoundBehavior
-          sound:
-            collection: MetalSlam
-    - trigger:
-        !type:DamageTrigger
-        damage: 200
-      behaviors:
-      - !type:ChangeConstructionNodeBehavior
-        node: girder
-      - !type:PlaySoundBehavior
-        sound:
-          collection: MetalSlam
-      - !type:DoActsBehavior
-        acts: ["Destruction"]
-
-- type: entity
   parent: WallSolid
   id: WallSolidRust
   suffix: rusted
@@ -1311,56 +1276,6 @@
   - type: IconSmooth
     key: woods
     base: wood
-
-- type: entity
-  parent: BaseWall
-  id: WallWeb
-  name: web wall
-  description: Keeps the spiders in and the greytide out.
-  components:
-  - type: MeleeSound
-    soundGroups:
-      Brute:
-        path:
-          "/Audio/Weapons/slash.ogg"
-  - type: Damageable
-    damageModifierSet: Web
-  - type: Sprite
-    sprite: Structures/Walls/web.rsi
-  - type: Icon
-    sprite: Structures/Walls/web.rsi
-  - type: Destructible
-    thresholds:
-    - trigger: # Excess damage, don't spawn entities
-        !type:DamageTrigger
-        damage: 100
-      behaviors:
-      - !type:PlaySoundBehavior
-        sound:
-          collection: WoodDestroy
-      - !type:DoActsBehavior
-        acts: ["Destruction"]
-    - trigger:
-        !type:DamageTrigger
-        damage: 30
-      behaviors:
-      - !type:DoActsBehavior
-        acts: [ "Destruction" ]
-      - !type:SpawnEntitiesBehavior
-        spawn:
-          MaterialWebSilk:
-            min: 1
-            max: 1
-      - !type:PlaySoundBehavior
-        sound:
-          collection: WoodDestroy
-  - type: IconSmooth
-    key: webs
-    base: wall
-  - type: Construction
-    graph: WebStructures
-    node: wall
-
 
 # Lavalend Walls
 

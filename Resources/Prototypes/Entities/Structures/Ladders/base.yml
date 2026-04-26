@@ -1,0 +1,130 @@
+- type: entity
+  id: ZLevelLadderBase
+  abstract: true
+  categories: [ ForkFiltered ]
+  parent: BaseStructure
+  name: stairs
+  description: Be careful, the higher you ascend, the more painful the fall.
+  placement:
+    mode: SnapgridCenter
+    snap:
+    - Wall
+  components:
+  - type: PlacementReplacement
+    key: walls
+  - type: Occluder
+    boundingBox: "-0.5,0.25,0.5,0.5"
+  - type: Sprite
+    state: straight
+    drawdepth: Mobs
+  - type: Transform
+    anchored: True
+  - type: Clickable
+  - type: Physics
+    bodyType: Static
+  - type: Fixtures
+    fixtures:
+      portalFixture:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.5,0.6,0.5,0.5"
+        mask:
+        - FullTileMask
+        layer:
+        - WallLayer
+        density: 1000
+        hard: true
+  - type: ZLevelHighGround
+    stick: true
+    heightCurve:
+    - 1.05
+    - 1.05
+    - 0.1
+
+- type: entity
+  parent: ZLevelLadderBase
+  id: ZLevelLadderCornerBase
+  abstract: true
+  placement:
+    mode: SnapgridCenter
+    snap:
+    - Wall
+  components:
+  - type: Sprite
+    state: corner
+  - type: Occluder
+    enabled: false
+  - type: ZLevelHighGround
+    corner: true
+    heightCurve:
+    - 1.05
+    - 1.05
+    - 0.5
+    - 0.1
+  - type: Fixtures
+    fixtures:
+      portalFixture:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "0.5,0.5,0.6,0.6"
+        mask:
+        - FullTileMask
+        layer:
+        - WallLayer
+        density: 1000
+        hard: true
+
+- type: entity
+  parent: ZLevelLadderCornerBase
+  id: ZLevelLadderCornerInnerBase
+  abstract: true
+  placement:
+    mode: SnapgridCenter
+    snap:
+    - Wall
+  components:
+  - type: Occluder
+    enabled: true
+    boundingBox: "-0.5,-0.5,0.5,0.5"
+  - type: Sprite
+    state: internal_corner
+
+- type: entity
+  id: ZLevelsLadderWoodenBase
+  abstract: true
+  name: wooden ladder
+  components:
+  - type: Sprite
+    sprite: Structures/Ladders/wooden.rsi
+  - type: Damageable
+    damageContainer: StructuralInorganic
+    damageModifierSet: Wood
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 20
+      behaviors:
+      - !type:SpawnEntitiesBehavior
+        spawn:
+          MaterialWoodPlank :
+            min: 1
+            max: 2
+      - !type:PlaySoundBehavior
+        sound:
+          collection: WoodDestroy
+      - !type:DoActsBehavior
+        acts: [ "Destruction" ]
+
+- type: entity
+  parent:
+  - ZLevelLadderBase
+  - ZLevelsLadderWoodenBase
+  id: ZLevelLadderWooden
+
+- type: entity
+  parent:
+  - ZLevelLadderCornerBase
+  - ZLevelsLadderWoodenBase
+  id: ZLevelLadderWoodenCorner
+  suffix: Corner

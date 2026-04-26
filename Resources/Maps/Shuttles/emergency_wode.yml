@@ -2708,14 +2708,6 @@ entities:
     - type: Transform
       pos: -4.5,-1.5
       parent: 2
-- proto: GrilleDiagonal
-  entities:
-  - uid: 474
-    components:
-    - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: -5.5,-1.5
-      parent: 2
 - proto: Gyroscope
   entities:
   - uid: 273

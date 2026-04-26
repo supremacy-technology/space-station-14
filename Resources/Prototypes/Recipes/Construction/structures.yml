@@ -247,30 +247,6 @@
   canRotate: false
 
 - type: construction
-  id: GrilleDiagonal
-  graph: GrilleDiagonal
-  startNode: start
-  targetNode: grilleDiagonal
-  category: construction-category-structures
-  conditions:
-    - !type:TileNotBlocked
-      failIfSpace: false
-  objectType: Structure
-  placementMode: SnapgridCenter
-
-- type: construction
-  id: ClockworkGrilleDiagonal
-  graph: GrilleDiagonal
-  startNode: start
-  targetNode: clockworkGrilleDiagonal
-  category: construction-category-structures
-  conditions:
-    - !type:TileNotBlocked
-      failIfSpace: false
-  objectType: Structure
-  placementMode: SnapgridCenter
-
-- type: construction
   id: Window
   graph: Window
   startNode: start

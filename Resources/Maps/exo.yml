@@ -85931,37 +85931,6 @@ entities:
     - type: Transform
       pos: -62.5,-54.5
       parent: 2
-- proto: GrilleDiagonal
-  entities:
-  - uid: 1797
-    components:
-    - type: Transform
-      rot: 3.141592653589793 rad
-      pos: 20.5,-45.5
-      parent: 2
-  - uid: 1798
-    components:
-    - type: Transform
-      pos: 14.5,-39.5
-      parent: 2
-  - uid: 1799
-    components:
-    - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: 14.5,-45.5
-      parent: 2
-  - uid: 14429
-    components:
-    - type: Transform
-      rot: -1.5707963267948966 rad
-      pos: 20.5,-39.5
-      parent: 2
-  - uid: 15215
-    components:
-    - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: 48.5,-64.5
-      parent: 2
 - proto: GrilleSpawner
   entities:
   - uid: 3138
