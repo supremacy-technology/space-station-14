@@ -24,16 +24,3 @@
       steps:
       - tool: Prying
         doAfter: 2
-    - to: ZLevelLadderWoodenCorner
-      steps:
-      - tool: Prying
-        doAfter: 2
-
-  - node: ZLevelLadderWoodenCorner
-    entity: ZLevelLadderWoodenCorner
-    edges:
-    - to: ZLevelLadderWooden
-      steps:
-      - tool: Prying
-        doAfter: 2
-

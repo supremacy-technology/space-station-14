@@ -11,16 +11,3 @@
   conditions:
   - !type:TileNotBlocked
 
-- type: construction
-  hide: false
-  id: ZLevelLadderWoodenCorner
-  graph: ZLevelLadderWooden
-  startNode: start
-  targetNode: ZLevelLadderWoodenCorner
-  category: construction-category-structures
-  objectType: Structure
-  placementMode: SnapgridCenter
-  canBuildInImpassable: false
-  conditions:
-  - !type:TileNotBlocked
-

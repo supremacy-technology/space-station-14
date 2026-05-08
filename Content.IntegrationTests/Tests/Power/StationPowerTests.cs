@@ -34,7 +34,6 @@ public sealed class StationPowerTests
         "Snowball",
         "Reach",
         "Exo",
-        "ZLevelsTemplate",
     ];
 
     [Explicit]
